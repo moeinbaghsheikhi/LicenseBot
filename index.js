@@ -38,14 +38,20 @@ bot.on("text", async(ctx) => {
     const message = ctx.update.message.text
 
     // get message is password
-    const isPassword = client.get(`admin:${chatId}`)
+    const isPassword = await client.get(`admin:${chatId}`)
+    const isAdmin =    await client.get(`admin:login:${chatId}`)
+
     if(isPassword){
         const validatePassword = await knex("admin_passwords").where({ password: message }).first()
         if(validatePassword){
             client.set(`admin:login:${chatId}`, "true", { EX: 604800 })
             ctx.reply("با موفقیت وارد شدی🚀")
+            client.del(`admin:${chatId}`)
         }
         else ctx.reply("پسورد وارد شده صحیح نیست ⛔")
+    }else if(isAdmin){
+        const addNewLicense = await knex("licenses").insert({ license_key: message })
+        ctx.reply("لایسنس جدید اضافه شد➕✅")
     }
 })
 
