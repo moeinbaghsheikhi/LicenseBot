@@ -1,4 +1,4 @@
-const { Telegraf } = require('telegraf')
+const { Telegraf, Markup } = require('telegraf')
 const { message } = require('telegraf/filters')
 const dotenv = require('dotenv')
 const knex = require("./config/db")
@@ -20,7 +20,13 @@ bot.start(async(ctx) => {
     if(!hasUser)    await knex("users").insert({ chat_id: chatId, name })
 
     // send welcome message
-    ctx.reply("سلام به ربات لایسنس خوش اومدی:)")
+    ctx.reply("سلام به ربات لایسنس خوش اومدی:)",
+        Markup.inlineKeyboard([
+            [
+                Markup.button.callback("خرید لایسنس", "shop")
+            ]
+        ])
+    )
 })
 
 bot.command("admin", async(ctx) => {
@@ -53,6 +59,15 @@ bot.on("text", async(ctx) => {
         const addNewLicense = await knex("licenses").insert({ license_key: message })
         ctx.reply("لایسنس جدید اضافه شد➕✅")
     }
+})
+
+bot.action("shop", async(ctx) => {
+    const getRandomLicense = await knex("licenses").where({ status: "set" }).orderByRaw("RAND()").first()
+    
+    if(getRandomLicense){
+        ctx.reply("لایسنس شما با موفقیت دریافت شد: \n " + getRandomLicense.license_key)
+        const updateLicense = await knex("licenses").where({ id: getRandomLicense.id }).update({ status: "use" })
+    } else ctx.reply("لایسنسی وجود ندار. تا شارژ مجدد لایسنس ها صبر کنید")
 })
 
 bot.launch()
