@@ -11,6 +11,33 @@ const redis = require('redis');
 const client = redis.createClient();
 client.connect();
 
+// channels 
+const rqeuiredChannels = ["@dsfsdfadscxc"]
+
+async function checkUserMembership(ctx){
+    const userId = ctx.message.from.id
+    let isMember = true
+
+    for(const channel of rqeuiredChannels){
+        const member = await ctx.telegram.getChatMember(channel, userId)
+        if(member.status == "left" || member.status == "kicked"){
+            isMember = false
+            break;
+        }
+    }
+
+    return isMember
+}
+
+bot.use(async (ctx, next) => {
+    const isMember = await checkUserMembership(ctx)
+    
+    if(isMember) return next()
+    else {
+        ctx.reply(`برای استفاده از این ربات ابتدا باید توی کانال های زیر عضو بشی: \n\n @dsfsdfadscxc`)
+    }
+})
+
 bot.start(async(ctx) => {
     const chatId = ctx.chat.id
     const name   = ctx.chat.first_name
